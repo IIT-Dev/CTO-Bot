@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 class CTO(commands.Bot):
 	def __init__(self):
 		intents = discord.Intents().all()
-		super().__init__(command_prefix = '..', case_insensitive=True, intents=intents)
+		super().__init__(command_prefix = '!', case_insensitive=True, intents=intents)
 
 	@watch(path='commands')
 	async def on_ready(self):
@@ -26,7 +26,8 @@ class CTO(commands.Bot):
 
 async def main():
 	client = CTO()
-	client.load_extension()
+	client.load_extension('commands.konsultasi')
+	client.load_extension('commands.others')
 	await client.start(os.getenv('DISCORD_TOKEN'))
 
 if __name__ == '__main__':
