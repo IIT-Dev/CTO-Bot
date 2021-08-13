@@ -6,22 +6,22 @@ class OtherCommands(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
-	async def confirmation(self, ctx):
-		confirmation = await ctx.send(f'Do you really want to delete data from table {tableName}?')
-		await confirmation.add_reaction('✅')
-		await confirmation.add_reaction('❌')
+	# async def confirmation(self, ctx):
+	# 	confirmation = await ctx.send(f'Do you really want to delete data from table {tableName}?')
+	# 	await confirmation.add_reaction('✅')
+	# 	await confirmation.add_reaction('❌')
 
-		def check(reaction, user):
-			return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
+	# 	def check(reaction, user):
+	# 		return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
 
-		try:
-			reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
-		except asyncio.TimeoutError:
-			await confirmation.edit('Timed Out!')
-			await confirmation.clear_reactions()
-			return
+	# 	try:
+	# 		reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+	# 	except asyncio.TimeoutError:
+	# 		await confirmation.edit('Timed Out!')
+	# 		await confirmation.clear_reactions()
+	# 		return
 
-	return reaction, user
+	# return reaction, user
 
 	@commands.command(name='ping', aliases=['p'])
 	async def ping(self, ctx):
@@ -29,7 +29,7 @@ class OtherCommands(commands.Cog):
 
 	@commands.command()
 	@commands.is_owner()
-	async def set_db(self, ctx):
+	async def make_db(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
@@ -68,13 +68,31 @@ class OtherCommands(commands.Cog):
 		exist = cursor.execute(selection).fetchall()
 
 		if exist:
+			confirmation = await ctx.send(f'Do you really want to delete data from table {tableName}?')
+			await confirmation.add_reaction('✅')
+			await confirmation.add_reaction('❌')
 
-			deletion = f"""
-			DELETE FROM {tableName}
-			"""
-			cursor.execute(deletion)
+			def check(reaction, user):
+				return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
 
-			await ctx.send(f'Data from table {tableName} has been deleted!')
+			try:
+				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+			except asyncio.TimeoutError:
+				await confirmation.edit('Timed Out!')
+				await confirmation.clear_reactions()
+				return
+
+			if str(reaction.emoji) == '✅':
+				deletion = f"""
+				DELETE FROM {tableName}
+				"""
+				cursor.execute(deletion)
+
+				await confirmation.edit(f'Data from table {tableName} has been deleted!')
+
+			elif str(reaction.emoji) == '❌':
+				await confirmation.edit('Cancelled')
+
 		else:
 			await ctx.send(f'Table {tableName} doesn\'t exist!')
 

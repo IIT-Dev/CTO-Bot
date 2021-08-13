@@ -6,7 +6,7 @@ import sqlite3
 class Konsultasi(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.msg_list = self.get_msg()
+		# self.msg_list = self.get_msg()
 
 	async def get_cto_member(self):
 		member1 = await self.bot.fetch_user(394083155994214411)
@@ -20,20 +20,20 @@ class Konsultasi(commands.Cog):
 
 		return member_list
 
-	def get_msg(self):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
+	# def get_msg(self):
+	# 	conn = sqlite3.connect('Konsultasi.db')
+	# 	cursor = conn.cursor()
 
-		selection = """
-		SELECT *
-		FROM message
-		"""
-		msg_list = cursor.execute(selection).fetchall
+	# 	selection = """
+	# 	SELECT *
+	# 	FROM message
+	# 	"""
+	# 	msg_list = cursor.execute(selection).fetchall()
 
-		conn.commit()
-		conn.close()
+	# 	conn.commit()
+	# 	conn.close()
 
-		return msg_list
+	# 	return msg_list
 
 	async def get_cat(self, guildID):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -96,7 +96,7 @@ class Konsultasi(commands.Cog):
 		embed.set_footer(text='React dengan emoji 🙋 untuk membuka channel konsultasi!')
 
 		await ctx.message.delete()
-		
+
 		msg = await ctx.send(embed=embed)
 		await msg.add_reaction('🙋')
 
