@@ -26,7 +26,7 @@ class Konsultasi(commands.Cog):
 
 	# 	selection = """
 	# 	SELECT *
-	# 	FROM message
+	# 	FROM settings
 	# 	"""
 	# 	msg_list = cursor.execute(selection).fetchall()
 
@@ -86,13 +86,14 @@ class Konsultasi(commands.Cog):
 			conn.commit()
 			conn.close()
 
+			await ctx.send('Setup successful!')
 		else:
-			print('Correct usage : `!setup [category ID] [message ID]`')
+			await ctx.send('Correct usage : `!setup [category ID] [message ID]`')
 
 	@commands.command()
 	@commands.is_owner()
 	async def public_message(self, ctx):
-		embed = discord.Embed('Konsultasi dengan CTO HMIF ITB!', color=discord.Colour.gold())
+		embed = discord.Embed(title='Konsultasi dengan CTO HMIF ITB!', color=discord.Colour.gold())
 		embed.set_footer(text='React dengan emoji 🙋 untuk membuka channel konsultasi!')
 
 		await ctx.message.delete()
@@ -104,9 +105,10 @@ class Konsultasi(commands.Cog):
 	async def on_raw_reaction_add(self, payload):
 		user = await self.bot.fetch_user(payload.user_id)
 		guild = await self.bot.fetch_guild(payload.guild_id)
+		message = await guild.fetch_message(payload.message_id)
 
 		if any([payload.message_id in tup for tup in self.msg_list]):
-			category = await self.get_cat(payload.guild_id)
+			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id))
 
 			overwrites = {
 				guild.default_role: discord.PermissionOverwrite(view_channel=False),
@@ -121,6 +123,8 @@ class Konsultasi(commands.Cog):
 
 			msg = await ch.send(embed=embed)
 			await msg.add_reaction('🔒')
+
+			await message.remove_reaction('🙋', user)
 
 def setup(bot):
 	bot.add_cog(Konsultasi(bot))

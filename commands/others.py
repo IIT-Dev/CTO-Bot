@@ -35,7 +35,7 @@ class OtherCommands(commands.Cog):
 
 		setup1 = """
 		CREATE TABLE IF NOT EXISTS konsultasi (
-			id_konsul int NOT NULL AUTOINCREMENT,
+			id_konsul int NOT NULL,
 			nama_konsul str NOT NULL,
 			solved int NOT NULL,
 			PRIMARY KEY (id_konsul)
@@ -54,6 +54,8 @@ class OtherCommands(commands.Cog):
 
 		conn.commit()
 		conn.close()
+
+		await ctx.send('Database has been set!')
 
 	@commands.command()
 	@commands.is_owner()
