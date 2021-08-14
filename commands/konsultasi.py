@@ -6,7 +6,6 @@ import sqlite3
 class Konsultasi(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.settings = self.get_settings()
 
 	async def get_cto_member(self):
 		member1 = await self.bot.fetch_user(394083155994214411)
@@ -20,13 +19,14 @@ class Konsultasi(commands.Cog):
 
 		return member_list
 
-	def get_settings(self):
+	def get_settings(self, guild_id):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = """
+		selection = f"""
 		SELECT *
 		FROM settings
+		WHERE guild_id = {guild_id}
 		"""
 		settings = cursor.execute(selection).fetchall()
 
@@ -53,7 +53,7 @@ class Konsultasi(commands.Cog):
 		if exist:
 			return exist[0][1]
 
-	def get_id_konsul(self):
+	def get_id_konsul(self, nama_konsul):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
@@ -61,12 +61,21 @@ class Konsultasi(commands.Cog):
 		SELECT id_konsul
 		FROM konsultasi
 		"""
-		id_konsul = cursor.execute(selection).fetchone()
+		id_konsul = cursor.execute(selection).fetchall()
+
+		if id_konsul:
+			return id_konsul[-1][0]+1
+		else:
+			insertion = f"""
+			INSERT INTO konsultasi
+			VALUES (1, '{nama_konsul}')
+			"""
+			cursor.execute(insertion)
+
+			return 1
 
 		conn.commit()
 		conn.close()
-
-		return id_konsul
 
 	@commands.command()
 	@commands.is_owner()
@@ -109,7 +118,7 @@ class Konsultasi(commands.Cog):
 		channel = await self.bot.fetch_channel(payload.channel_id)
 		message = await channel.fetch_message(payload.message_id)
 
-		if any([payload.message_id in tup for tup in self.settings]):
+		if any([payload.message_id in tup for tup in self.get_settings(payload.guild_id)]) and str(payload.emoji) == '🙋':
 			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id))
 
 			overwrites = {
@@ -117,15 +126,43 @@ class Konsultasi(commands.Cog):
 				guild.me: discord.PermissionOverwrite(view_channel=True)
 			}
 
-			ch = await category.create_text_channel(f'konsultasi-{self.get_id_konsul()}')
+			ch = await category.create_text_channel(f'konsultasi-{self.get_id_konsul(payload.member.name)}')
 
-			embed = discord.Embed(title=f'Halo {payload.member.nick}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
+			embed = discord.Embed(title=f'Halo {payload.member.name}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
 			embed.set_footer(text='React dengan emoji 🔒 untuk menutup channel ini')
 
 			msg = await ch.send(embed=embed)
 			await msg.add_reaction('🔒')
 
 			await message.remove_reaction('🙋', user)
+
+			conn = sqlite3.connect('Konsultasi.db')
+			cursor = conn.cursor()
+
+			if self.get_id_konsul(payload.member.name) == 1:
+				insertion = f"""
+				INSERT INTO konsultasi
+				VALUES (1, '{payload.member.name}')
+				"""
+				cursor.execute(insertion)
+			else:
+				insertion = f"""
+				INSERT INTO konsultasi (nama_konsul)
+				VALUES ('{payload.member.name}')
+				"""
+				cursor.execute(insertion)
+
+			conn.commit()
+			conn.close()
+
+		if channel.name.startswith('konsultasi-'):
+			def check_message(msg):
+				return (msg.author.bot and 
+					msg.embeds[0] and
+					msg.embeds[0].title == f'Halo {payload.member.name}!')
+
+			if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
+				await channel.delete()
 
 def setup(bot):
 	bot.add_cog(Konsultasi(bot))
