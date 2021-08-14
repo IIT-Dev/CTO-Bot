@@ -131,9 +131,11 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 				cursor.execute(drop2)
 
 				await confirmation.edit(content='Table `konsultasi` and `settings` have been remade!')
+				await confirmation.clear_reactions()
 
 			elif str(reaction.emoji) == '❌':
 				await confirmation.edit(content='Cancelled')
+				await confirmation.clear_reactions()
 				return
 
 		except sqlite3.OperationalError:
@@ -221,6 +223,8 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 			elif str(reaction.emoji) == '❌':
 				await confirmation.edit(content='Cancelled')
+
+			await confirmation.clear_reactions()
 
 		else:
 			await ctx.send(f'Table {tableName} doesn\'t exist!')
