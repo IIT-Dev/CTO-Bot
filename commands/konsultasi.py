@@ -6,7 +6,7 @@ import sqlite3
 class Konsultasi(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
-		# self.msg_list = self.get_msg()
+		self.settings = self.get_settings()
 
 	async def get_cto_member(self):
 		member1 = await self.bot.fetch_user(394083155994214411)
@@ -20,20 +20,21 @@ class Konsultasi(commands.Cog):
 
 		return member_list
 
-	# def get_msg(self):
-	# 	conn = sqlite3.connect('Konsultasi.db')
-	# 	cursor = conn.cursor()
+	def get_settings(self):
+		conn = sqlite3.connect('Konsultasi.db')
+		cursor = conn.cursor()
 
-	# 	selection = """
-	# 	SELECT *
-	# 	FROM settings
-	# 	"""
-	# 	msg_list = cursor.execute(selection).fetchall()
+		selection = """
+		SELECT *
+		FROM settings
+		"""
+		settings = cursor.execute(selection).fetchall()
 
-	# 	conn.commit()
-	# 	conn.close()
+		conn.commit()
+		conn.close()
 
-	# 	return msg_list
+		if settings:
+			return settings
 
 	async def get_cat(self, guildID):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -50,7 +51,7 @@ class Konsultasi(commands.Cog):
 		conn.close()
 
 		if exist:
-			return exist[0][0]
+			return exist[0][1]
 
 	def get_id_konsul(self):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -60,7 +61,7 @@ class Konsultasi(commands.Cog):
 		SELECT id_konsul
 		FROM konsultasi
 		"""
-		id_konsul = cursor.execute(selection).fetchall()[0][0]
+		id_konsul = cursor.execute(selection).fetchone()
 
 		conn.commit()
 		conn.close()
@@ -105,18 +106,18 @@ class Konsultasi(commands.Cog):
 	async def on_raw_reaction_add(self, payload):
 		user = await self.bot.fetch_user(payload.user_id)
 		guild = await self.bot.fetch_guild(payload.guild_id)
-		message = await guild.fetch_message(payload.message_id)
+		channel = await self.bot.fetch_channel(payload.channel_id)
+		message = await channel.fetch_message(payload.message_id)
 
-		if any([payload.message_id in tup for tup in self.msg_list]):
+		if any([payload.message_id in tup for tup in self.settings]):
 			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id))
 
 			overwrites = {
 				guild.default_role: discord.PermissionOverwrite(view_channel=False),
-				user: discord.PermissionOverwrite(view_channel=True),
 				guild.me: discord.PermissionOverwrite(view_channel=True)
 			}
 
-			ch = await category.create_text_channel(f'konsultasi-{self.get_id_konsul()}', overwrites=overwrites)
+			ch = await category.create_text_channel(f'konsultasi-{self.get_id_konsul()}')
 
 			embed = discord.Embed(title=f'Halo {payload.member.nick}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
 			embed.set_footer(text='React dengan emoji 🔒 untuk menutup channel ini')

@@ -28,6 +28,7 @@ async def main():
 	client = CTO()
 	client.load_extension('commands.konsultasi')
 	client.load_extension('commands.others')
+	client.load_extension('commands.error_handler')
 	await client.start(os.getenv('DISCORD_TOKEN'))
 
 if __name__ == '__main__':

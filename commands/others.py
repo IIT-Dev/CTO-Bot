@@ -33,12 +33,51 @@ class OtherCommands(commands.Cog):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
+		view1 = """
+		SELECT *
+		FROM konsultasi
+		"""
+		test1 = cursor.execute(view1).fetchall()
+
+		view2 = """
+		SELECT *
+		FROM settings
+		"""
+		test2 = cursor.execute(view2).fetchall()
+
+		if test1 or test2:
+			confirmation = await ctx.send(f'Do you really want to drop `konsultasi` and `settings` tables and create the new ones?')
+			await confirmation.add_reaction('✅')
+			await confirmation.add_reaction('❌')
+
+			def check(reaction, user):
+				return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
+
+			try:
+				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+			except asyncio.TimeoutError:
+				await confirmation.edit('Timed Out!')
+				await confirmation.clear_reactions()
+				return
+
+			if str(reaction.emoji) == '✅':
+				drop1 = "DROP TABLE konsultasi"
+				cursor.execute(drop1)
+
+				drop2 = "DROP TABLE settings"
+				cursor.execute(drop2)
+
+				await confirmation.edit(f'Table `konsultasi` and `settings` have been remade!')
+
+			elif str(reaction.emoji) == '❌':
+				await confirmation.edit('Cancelled')
+				return
+
 		setup1 = """
 		CREATE TABLE IF NOT EXISTS konsultasi (
-			id_konsul int NOT NULL,
+			id_konsul INTEGER PRIMARY KEY AUTOINCREMENT,
 			nama_konsul str NOT NULL,
-			solved int NOT NULL,
-			PRIMARY KEY (id_konsul)
+			solved int NOT NULL
 		);
 		"""
 		cursor.execute(setup1)
@@ -59,8 +98,24 @@ class OtherCommands(commands.Cog):
 
 	@commands.command()
 	@commands.is_owner()
+	async def view_settings(self, ctx):
+		conn = sqlite3.connect('Konsultasi.db')
+		cursor = conn.cursor()
+
+		selection = """
+		SELECT * FROM settings
+		"""
+		settings = cursor.execute(selection).fetchall()
+
+		conn.commit()
+		conn.close()
+
+		await ctx.send(settings)
+
+	@commands.command()
+	@commands.is_owner()
 	async def delete_table(self, ctx, tableName:str=None):
-		conn = sqlite3.connect()
+		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
 		selection = f"""
