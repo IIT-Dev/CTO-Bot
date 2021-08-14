@@ -227,7 +227,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 			await confirmation.clear_reactions()
 
 		else:
-			await ctx.send(f'Table {tableName} doesn\'t exist!')
+			await ctx.send(f'There isn\'t any data on table {tableName}!')
 
 		conn.commit()
 		conn.close()
