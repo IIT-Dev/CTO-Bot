@@ -26,21 +26,21 @@ class OtherCommands(commands.Cog):
 
 	# return reaction, user
 
-	@commands.command(name='ping', aliases=['p'])
+	@commands.command(name='ping', aliases=['p'], description='Show bot\'s ping')
 	async def ping(self, ctx):
-		await ctx.send(f"Pong! 🏓\nPing : {int(self.bot.latency*1000)} ms")
+		await ctx.send(f'Pong! 🏓\nPing : {int(self.bot.latency*1000)} ms')
 
-	@commands.command(name='settings')
+	@commands.command(name='settings', description='Show settings of the current server')
 	async def check_settings(self, ctx, arg1:Optional[str], arg2:Optional[str], arg3:Optional[int]):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		if arg1 == 'change':
-			if arg2 == 'category':
+		if arg1 == 'change' or arg1 == 'chg':
+			if arg2 == 'category' or arg2 == 'cat' or arg2 == 'c':
 				try:
 					category = await self.bot.fetch_channel(arg3)
 				except:
-					await ctx.send('Category Not Found!')
+					await ctx.send('Category Not Found!', delete_after=5)
 					return
 
 				update = f"""
@@ -50,13 +50,13 @@ class OtherCommands(commands.Cog):
 				"""
 				cursor.execute(update)
 
-				await ctx.send(f'Category changed to `{category.name.upper()}`!')
+				await ctx.send(f'Main category has been changed to `{category.name.upper()}`!', delete_after=5)
 
-			elif arg2 == 'message':
+			elif arg2 == 'message' or arg2 == 'msg' or arg2 == 'm':
 				try:
 					await ctx.channel.fetch_message(arg3)
 				except discord.NotFound:
-					await ctx.send('Message Not Found!')
+					await ctx.send('Message Not Found!', delete_after=5)
 					return
 
 				update = f"""
@@ -66,10 +66,10 @@ class OtherCommands(commands.Cog):
 				"""
 				cursor.execute(update)
 
-				await ctx.send(f'Message changed to https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{arg3}')
+				await ctx.send(f'Main message has been changed to https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{arg3}', delete_after=5)
 
 			else:
-				await ctx.send('Correct usage : `!settings change [category|message] [categoryID|messageID]`')
+				await ctx.send('Correct usage : `!settings (change/chg) [(category/cat/c)|(message/msg/m)] [category ID|message ID]`', delete_after=8)
 
 		else:
 			selection = f"""
@@ -92,7 +92,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn.commit()
 		conn.close()
 
-	@commands.command()
+	@commands.command(description='Make a database with `konsultasi` and `settings` tables')
 	@commands.is_owner()
 	async def make_db(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -119,7 +119,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 			try:
 				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
 			except asyncio.TimeoutError:
-				await confirmation.edit(content='Timed Out!')
+				await confirmation.edit(content='Timed Out!', delete_after=5)
 				await confirmation.clear_reactions()
 				return
 
@@ -130,11 +130,11 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 				drop2 = "DROP TABLE settings"
 				cursor.execute(drop2)
 
-				await confirmation.edit(content='Table `konsultasi` and `settings` have been remade!')
+				await confirmation.edit(content='Table `konsultasi` and `settings` have been remade!', delete_after=5)
 				await confirmation.clear_reactions()
 
 			elif str(reaction.emoji) == '❌':
-				await confirmation.edit(content='Cancelled')
+				await confirmation.edit(content='Cancelled', delete_after=5)
 				await confirmation.clear_reactions()
 				return
 
@@ -162,9 +162,9 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 			conn.commit()
 			conn.close()
 
-			await ctx.send('Database has been set!')
+			await ctx.send('Database has been set!', delete_after=5)
 
-	@commands.command()
+	@commands.command(description='See all the settings in form of list of tuples (guild ID, category ID, message ID)')
 	@commands.is_owner()
 	async def view_settings(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -180,7 +180,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 		await ctx.send(settings)
 
-	@commands.command()
+	@commands.command(description='Delete the data of a table (not `DROP TABLE`)')
 	@commands.is_owner()
 	async def del_table(self, ctx, tableName:str=None):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -203,7 +203,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 			try:
 				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
 			except asyncio.TimeoutError:
-				await confirmation.edit(content='Timed Out!')
+				await confirmation.edit(content='Timed Out!', delete_after=5)
 				await confirmation.clear_reactions()
 				return
 
@@ -219,20 +219,20 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 					"""
 					cursor.execute(alter)
 
-				await confirmation.edit(content=f'Data from table `{tableName}` has been deleted!')
+				await confirmation.edit(content=f'Data from table `{tableName}` has been deleted!', delete_after=5)
 
 			elif str(reaction.emoji) == '❌':
-				await confirmation.edit(content='Cancelled')
+				await confirmation.edit(content='Cancelled', delete_after=5)
 
 			await confirmation.clear_reactions()
 
 		else:
-			await ctx.send(f'There isn\'t any data on table {tableName}!')
+			await ctx.send(f'There isn\'t any data on table {tableName}!', delete_after=5)
 
 		conn.commit()
 		conn.close()
 
-	@commands.command()
+	@commands.command(description='Shows the contents of `konsultasi` table in the database')
 	@commands.is_owner()
 	async def view_konsul(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -248,7 +248,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 		await ctx.send(result)
 
-	@commands.command()
+	@commands.command(description='Shows "id konsultasi" attribute in the `konsultasi` table')
 	@commands.is_owner()
 	async def view_id_konsul(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -264,7 +264,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 		await ctx.send(result)
 
-	@commands.command()
+	@commands.command(description='Reload extension')
 	@commands.is_owner()
 	async def reload_ex(self, ctx):
 		await ctx.send('Which extension do you want to reload?')

@@ -77,7 +77,7 @@ class Konsultasi(commands.Cog):
 		conn.commit()
 		conn.close()
 
-	@commands.command()
+	@commands.command(description='Setup bot settings for a first time on a server')
 	@commands.is_owner()
 	async def setup(self, ctx, categoryID:int=None, messageID:int=None):
 		if messageID is not None and categoryID is not None:
@@ -87,20 +87,31 @@ class Konsultasi(commands.Cog):
 			conn = sqlite3.connect('Konsultasi.db')
 			cursor = conn.cursor()
 
-			insertion = f"""
-			INSERT INTO settings
-			VALUES ({ctx.guild.id}, {categoryID}, {messageID})
+			selection = f"""
+			SELECT *
+			FROM settings
+			WHERE guild_id = {ctx.guild.id}
 			"""
-			cursor.execute(insertion)
+			exist = cursor.execute(selection).fetchall()
+
+			if exist:
+				insertion = f"""
+				INSERT INTO settings
+				VALUES ({ctx.guild.id}, {categoryID}, {messageID})
+				"""
+				cursor.execute(insertion)
+
+				await ctx.send('Setup successful!', delete_after=5)
+
+			else:
+				await ctx.send('The settings on this server has been set up', delete_after=5)
 
 			conn.commit()
 			conn.close()
-
-			await ctx.send('Setup successful!')
 		else:
-			await ctx.send('Correct usage : `!setup [category ID] [message ID]`')
+			await ctx.send('Correct usage : `!setup [category ID] [message ID]`', delete_after=8)
 
-	@commands.command()
+	@commands.command(description='Make a main message')
 	@commands.is_owner()
 	async def public_message(self, ctx):
 		embed = discord.Embed(title='Konsultasi dengan CTO HMIF ITB!', color=discord.Colour.gold())
@@ -163,6 +174,6 @@ class Konsultasi(commands.Cog):
 
 			if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
 				await channel.delete()
-
+				
 def setup(bot):
 	bot.add_cog(Konsultasi(bot))
