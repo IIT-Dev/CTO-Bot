@@ -19,7 +19,7 @@ class Konsultasi(commands.Cog):
 
 		return member_list
 
-	def get_settings(self, guild_id):
+	async def get_settings(self, guild_id):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
@@ -61,7 +61,7 @@ class Konsultasi(commands.Cog):
 		if exist:
 			return exist[0][1]
 
-	def get_id_konsul(self, nama_konsul):
+	async def get_id_konsul(self, nama_konsul):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
@@ -149,7 +149,7 @@ class Konsultasi(commands.Cog):
 		channel = await self.bot.fetch_channel(payload.channel_id)
 		message = await channel.fetch_message(payload.message_id)
 
-		if any([payload.message_id in tup for tup in self.get_settings(payload.guild_id)]) and str(payload.emoji) == '🙋':
+		if any([payload.message_id in tup for tup in await self.get_settings(payload.guild_id)]) and str(payload.emoji) == '🙋':
 			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id))
 
 			overwrites = {
@@ -157,7 +157,7 @@ class Konsultasi(commands.Cog):
 				guild.me: discord.PermissionOverwrite(view_channel=True)
 			}
 
-			ch = await category.create_text_channel(f'konsultasi-{self.get_id_konsul(payload.member.name)}')
+			ch = await category.create_text_channel(f'konsultasi-{await self.get_id_konsul(payload.member.name)}')
 
 			embed = discord.Embed(title=f'Halo {payload.member.name}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
 			embed.set_footer(text='React dengan emoji 🔒 untuk menutup channel ini')
@@ -170,7 +170,7 @@ class Konsultasi(commands.Cog):
 			conn = sqlite3.connect('Konsultasi.db')
 			cursor = conn.cursor()
 
-			if self.get_id_konsul(payload.member.name) == 1:
+			if await self.get_id_konsul(payload.member.name) == 1:
 				insertion = f"""
 				INSERT INTO konsultasi
 				VALUES (1, '{payload.member.name}')
