@@ -23,15 +23,19 @@ class Konsultasi(commands.Cog):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = f"""
-		SELECT *
-		FROM settings
-		WHERE guild_id = {guild_id}
-		"""
-		settings = cursor.execute(selection).fetchall()
-
-		conn.commit()
-		conn.close()
+		try:
+			selection = f"""
+			SELECT *
+			FROM settings
+			WHERE guild_id = {guild_id}
+			"""
+			settings = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+			return
+		finally:
+			conn.commit()
+			conn.close()
 
 		if settings:
 			return settings
@@ -40,15 +44,19 @@ class Konsultasi(commands.Cog):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = f"""
-		SELECT *
-		FROM settings
-		WHERE guild_id = {guildID}
-		"""
-		exist = cursor.execute(selection).fetchall()
-
-		conn.commit()
-		conn.close()
+		try:
+			selection = f"""
+			SELECT *
+			FROM settings
+			WHERE guild_id = {guildID}
+			"""
+			exist = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+			return
+		finally:
+			conn.commit()
+			conn.close()
 
 		if exist:
 			return exist[0][1]
@@ -57,11 +65,17 @@ class Konsultasi(commands.Cog):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = """
-		SELECT id_konsul
-		FROM konsultasi
-		"""
-		id_konsul = cursor.execute(selection).fetchall()
+		try:
+			selection = """
+			SELECT id_konsul
+			FROM konsultasi
+			"""
+			id_konsul = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send('Table `konsultasi` doesn\'t exist!')
+			conn.commit()
+			conn.close()
+			return
 
 		if id_konsul:
 			return id_konsul[-1][0]+1
@@ -87,12 +101,18 @@ class Konsultasi(commands.Cog):
 			conn = sqlite3.connect('Konsultasi.db')
 			cursor = conn.cursor()
 
-			selection = f"""
-			SELECT *
-			FROM settings
-			WHERE guild_id = {ctx.guild.id}
-			"""
-			exist = cursor.execute(selection).fetchall()
+			try:
+				selection = f"""
+				SELECT *
+				FROM settings
+				WHERE guild_id = {ctx.guild.id}
+				"""
+				exist = cursor.execute(selection).fetchall()
+			except sqlite3.OperationalError:
+				await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+				conn.commit()
+				conn.close()
+				return
 
 			if exist:
 				await ctx.send('The settings on this server has been set up', delete_after=5)

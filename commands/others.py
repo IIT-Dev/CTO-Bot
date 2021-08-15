@@ -43,12 +43,19 @@ class OtherCommands(commands.Cog):
 					await ctx.send('Category Not Found!', delete_after=5)
 					return
 
-				update = f"""
-				UPDATE settings
-				SET category_id = {arg3}
-				WHERE guild_id = {ctx.guild.id}
-				"""
-				cursor.execute(update)
+				try:
+					update = f"""
+					UPDATE settings
+					SET category_id = {arg3}
+					WHERE guild_id = {ctx.guild.id}
+					"""
+					cursor.execute(update)
+				except sqlite3.OperationalError:
+					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+					return
+				finally:
+					conn.commit()
+					conn.close()
 
 				await ctx.send(f'Main category has been changed to `{category.name.upper()}`!', delete_after=5)
 
@@ -59,12 +66,19 @@ class OtherCommands(commands.Cog):
 					await ctx.send('Message Not Found!', delete_after=5)
 					return
 
-				update = f"""
-				UPDATE settings
-				SET message_id = {arg3}
-				WHERE guild_id = {ctx.guild.id}
-				"""
-				cursor.execute(update)
+				try:
+					update = f"""
+					UPDATE settings
+					SET category_id = {arg3}
+					WHERE guild_id = {ctx.guild.id}
+					"""
+					cursor.execute(update)
+				except sqlite3.OperationalError:
+					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+					return
+				finally:
+					conn.commit()
+					conn.close()
 
 				await ctx.send(f'Main message has been changed to https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{arg3}', delete_after=5)
 
@@ -103,11 +117,13 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 			SELECT *
 			FROM konsultasi
 			"""
+			cursor.execute(view1).fetchall()
 
 			view2 = """
 			SELECT *
 			FROM settings
 			"""
+			cursor.execute(view2).fetchall()
 
 			confirmation = await ctx.send(f'Do you really want to drop `konsultasi` and `settings` tables and create the new ones?')
 			await confirmation.add_reaction('✅')
@@ -170,13 +186,18 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = """
-		SELECT * FROM settings
-		"""
-		settings = cursor.execute(selection).fetchall()
-
-		conn.commit()
-		conn.close()
+		try:
+			selection = """
+			SELECT *
+			FROM settings
+			"""
+			settings = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send('Table `settings` doesn\'t exist!')
+			return
+		finally:
+			conn.commit()
+			conn.close()
 
 		await ctx.send(settings)
 
@@ -186,11 +207,17 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = f"""
-		SELECT *
-		FROM {tableName}
-		"""
-		exist = cursor.execute(selection).fetchall()
+		try:
+			selection = f"""
+			SELECT *
+			FROM {tableName}
+			"""
+			exist = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send(f'Table `{tableName}` doesn\'t exist!')
+			conn.commit()
+			conn.close()
+			return
 
 		if exist:
 			confirmation = await ctx.send(f'Do you really want to delete data from table `{tableName}`?')
@@ -238,13 +265,18 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = """
-		SELECT * FROM konsultasi
-		"""
-		result = cursor.execute(selection).fetchall()
-
-		conn.commit()
-		conn.close()
+		try:
+			selection = """
+			SELECT *
+			FROM konsultasi
+			"""
+			result = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send('Table `konsultasi` doesn\'t exist')
+			return
+		finally:
+			conn.commit()
+			conn.close()
 
 		await ctx.send(result)
 
@@ -254,13 +286,18 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
 
-		selection = """
-		SELECT id_konsul FROM konsultasi
-		"""
-		result = cursor.execute(selection).fetchall()
-
-		conn.commit()
-		conn.close()
+		try:
+			selection = """
+			SELECT id_konsul
+			FROM konsultasi
+			"""
+			result = cursor.execute(selection).fetchall()
+		except sqlite3.OperationalError:
+			await ctx.send('Table `konsultasi` doesn\'t exist!')
+			return
+		finally:
+			conn.commit()
+			conn.close()
 
 		await ctx.send(result)
 
