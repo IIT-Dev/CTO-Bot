@@ -77,7 +77,7 @@ class Konsultasi(commands.Cog):
 		conn.commit()
 		conn.close()
 
-	@commands.command(description='Setup bot settings for a first time on a server')
+	@commands.command(brief='Setup bot settings for a first time on a server', description='Setup bot settings for a first time on a server')
 	@commands.is_owner()
 	async def setup(self, ctx, categoryID:int=None, messageID:int=None):
 		if messageID is not None and categoryID is not None:
@@ -111,7 +111,7 @@ class Konsultasi(commands.Cog):
 		else:
 			await ctx.send('Correct usage : `!setup [category ID] [message ID]`', delete_after=8)
 
-	@commands.command(description='Make a main message')
+	@commands.command(brief='Make a main message', description='Make a main message')
 	@commands.is_owner()
 	async def public_message(self, ctx):
 		embed = discord.Embed(title='Konsultasi dengan CTO HMIF ITB!', color=discord.Colour.gold())

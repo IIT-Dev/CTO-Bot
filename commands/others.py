@@ -26,11 +26,11 @@ class OtherCommands(commands.Cog):
 
 	# return reaction, user
 
-	@commands.command(name='ping', aliases=['p'], description='Show bot\'s ping')
+	@commands.command(name='ping', aliases=['p'], brief='Show bot\'s ping', description='Show bot\'s ping')
 	async def ping(self, ctx):
 		await ctx.send(f'Pong! 🏓\nPing : {int(self.bot.latency*1000)} ms')
 
-	@commands.command(name='settings', description='Show settings of the current server')
+	@commands.command(name='settings', brief='Show settings of the current server', description='Show settings of the current server')
 	async def check_settings(self, ctx, arg1:Optional[str], arg2:Optional[str], arg3:Optional[int]):
 		conn = sqlite3.connect('Konsultasi.db')
 		cursor = conn.cursor()
@@ -92,7 +92,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn.commit()
 		conn.close()
 
-	@commands.command(description='Make a database with `konsultasi` and `settings` tables')
+	@commands.command(brief='Make a database with `konsultasi` and `settings` tables', description='Make a database with `konsultasi` and `settings` tables')
 	@commands.is_owner()
 	async def make_db(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -164,7 +164,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 			await ctx.send('Database has been set!', delete_after=5)
 
-	@commands.command(description='See all the settings in form of list of tuples (guild ID, category ID, message ID)')
+	@commands.command(brief='See all the settings in form of list of tuples (guild ID, category ID, message ID)', description='See all the settings in form of list of tuples (guild ID, category ID, message ID)')
 	@commands.is_owner()
 	async def view_settings(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -180,7 +180,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 		await ctx.send(settings)
 
-	@commands.command(description='Delete the data of a table (not `DROP TABLE`)')
+	@commands.command(brief='Delete the data of a table (not `DROP TABLE`)', description='Delete the data of a table (not `DROP TABLE`)')
 	@commands.is_owner()
 	async def del_table(self, ctx, tableName:str=None):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -232,7 +232,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 		conn.commit()
 		conn.close()
 
-	@commands.command(description='Shows the contents of `konsultasi` table in the database')
+	@commands.command(brief='Shows the contents of `konsultasi` table in the database', description='Shows the contents of `konsultasi` table in the database')
 	@commands.is_owner()
 	async def view_konsul(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -248,7 +248,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 		await ctx.send(result)
 
-	@commands.command(description='Shows "id konsultasi" attribute in the `konsultasi` table')
+	@commands.command(brief='Shows "id konsultasi" attribute in the `konsultasi` table', description='Shows "id konsultasi" attribute in the `konsultasi` table')
 	@commands.is_owner()
 	async def view_id_konsul(self, ctx):
 		conn = sqlite3.connect('Konsultasi.db')
@@ -264,7 +264,7 @@ Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{set
 
 		await ctx.send(result)
 
-	@commands.command(description='Reload extension')
+	@commands.command(brief='Reload extension', description='Reload extension')
 	@commands.is_owner()
 	async def reload_ex(self, ctx):
 		await ctx.send('Which extension do you want to reload?')
