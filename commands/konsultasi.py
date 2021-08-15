@@ -95,6 +95,9 @@ class Konsultasi(commands.Cog):
 			exist = cursor.execute(selection).fetchall()
 
 			if exist:
+				await ctx.send('The settings on this server has been set up', delete_after=5)
+
+			else:
 				insertion = f"""
 				INSERT INTO settings
 				VALUES ({ctx.guild.id}, {categoryID}, {messageID})
@@ -102,9 +105,6 @@ class Konsultasi(commands.Cog):
 				cursor.execute(insertion)
 
 				await ctx.send('Setup successful!', delete_after=5)
-
-			else:
-				await ctx.send('The settings on this server has been set up', delete_after=5)
 
 			conn.commit()
 			conn.close()
