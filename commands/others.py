@@ -54,9 +54,9 @@ class OtherCommands(commands.Cog):
 				except sqlite3.OperationalError:
 					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
 					return
-				finally:
-					conn.commit()
-					conn.close()
+				# finally:
+				# 	conn.commit()
+				# 	conn.close()
 
 				await ctx.send(f'Main category has been changed to `{category.name.upper()}`!', delete_after=5)
 
@@ -70,16 +70,16 @@ class OtherCommands(commands.Cog):
 				try:
 					update = f"""
 					UPDATE settings
-					SET category_id = {arg3}
+					SET message_id = {arg3}
 					WHERE guild_id = {ctx.guild.id}
 					"""
 					cursor.execute(update)
 				except sqlite3.OperationalError:
 					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
 					return
-				finally:
-					conn.commit()
-					conn.close()
+				# finally:
+				# 	conn.commit()
+				# 	conn.close()
 
 				await ctx.send(f'Main message has been changed to https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{arg3}', delete_after=5)
 
