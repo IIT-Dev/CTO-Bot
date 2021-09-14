@@ -9,25 +9,10 @@ class ErrorHandler(commands.Cog):
     
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
-            err_message = None
-            if (error.retry_after > 60):
-                minute = math.floor(error.retry_after/60)
-                second = math.floor(error.retry_after - minute*60)
-                err_message = await ctx.send(f"This command is still on cooldown. Please try again after {minute} minute(s) {second} second(s)")
-            else:
-                second = math.floor(error.retry_after)
-                err_message = await ctx.send(f"This command is still on cooldown. Please try again after {second} second(s)")
-            await asyncio.sleep(5)
-            await err_message.delete()
-
-        elif isinstance(error, commands.CommandInvokeError):
+        if isinstance(error, commands.CommandInvokeError):
             err_msg = await ctx.send("Error When Invoking Command!")
             await asyncio.sleep(5)
             await err_msg.delete()
-
-        elif isinstance(error, commands.errors.CommandNotFound):
-            pass
         
         elif isinstance(error, commands.RoleNotFound):
             err_msg = await ctx.send("Role Not Found!")

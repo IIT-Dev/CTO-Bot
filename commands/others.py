@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 
+import asyncio
 import sqlite3
 from typing import Optional
 

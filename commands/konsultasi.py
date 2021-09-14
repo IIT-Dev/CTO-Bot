@@ -31,7 +31,8 @@ class Konsultasi(commands.Cog):
 			"""
 			settings = cursor.execute(selection).fetchall()
 		except sqlite3.OperationalError:
-			await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+			# pass
+			# await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
 			return
 		finally:
 			conn.commit()
@@ -52,7 +53,8 @@ class Konsultasi(commands.Cog):
 			"""
 			exist = cursor.execute(selection).fetchall()
 		except sqlite3.OperationalError:
-			await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+			# pass
+			# await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
 			return
 		finally:
 			conn.commit()
@@ -72,7 +74,7 @@ class Konsultasi(commands.Cog):
 			"""
 			id_konsul = cursor.execute(selection).fetchall()
 		except sqlite3.OperationalError:
-			await ctx.send('Table `konsultasi` doesn\'t exist!')
+			# await ctx.send('Table `konsultasi` doesn\'t exist!')
 			conn.commit()
 			conn.close()
 			return
@@ -86,10 +88,10 @@ class Konsultasi(commands.Cog):
 			"""
 			cursor.execute(insertion)
 
-			return 1
+			conn.commit()
+			conn.close()
 
-		conn.commit()
-		conn.close()
+			return 1
 
 	@commands.command(brief='Setup bot settings for a first time on a server', description='Setup bot settings for a first time on a server')
 	@commands.is_owner()
