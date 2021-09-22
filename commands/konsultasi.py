@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+import asyncio
 from replit import db
 
 class Konsultasi(commands.Cog):
@@ -107,8 +108,13 @@ class Konsultasi(commands.Cog):
 
 			ch = await category.create_text_channel(f'konsultasi-{current_id_konsul}', overwrites=overwrites)
 
-			embed = discord.Embed(title=f'Halo {payload.member.name}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
-			embed.set_footer(text='React dengan emoji 🔒 untuk menutup channel ini')
+			desc_message = """
+Selamat datang di channel konsultasi CTO HMIF ITB! Channel ini bersifat private antara Anda dengan CTO IIT ( + moderator dan owner discord HMIF ITB :(  )
+
+Anda dapat melakukan konsultasi selama text channel ini ada. Jika Anda sudah selesai melakukan konsultasi, dimohon untuk mengisi form feedback [di sini](https://bit.ly/FeedbackIITConsultation) dan react dengan emoji 🔒 untuk menutup channel ini!
+
+Terimakasih"""
+			embed = discord.Embed(title=f'Halo {payload.member.nick}!', description=desc_message, color=discord.Colour.gold())
 
 			msg = await ch.send(embed=embed)
 			await msg.add_reaction('🔒')
@@ -128,10 +134,54 @@ class Konsultasi(commands.Cog):
 					def check_message(msg):
 						return (msg.author.bot and 
 							msg.embeds[0] and
-							msg.embeds[0].title == f'Halo {payload.member.name}!')
+							msg.embeds[0].title == f'Halo {payload.member.nick}!')
 
 					if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
-						await channel.delete()
+						await message.channel.send('Terima kasih telah melakukan konsultasi dengan CTO HMIF ITB!')
+						msg = await message.channel.send('Menghapus channel dalam 3...')
+						await asyncio.sleep(1)
+						for i in range(2, 0, -1):
+							await msg.edit(content=f'Menghapus channel dalam {i}...')
+							await asyncio.sleep(1)
+						await message.channel.delete()
+			except KeyError:
+				pass
+	
+	@commands.Cog.listener()
+	async def on_message(self, message):
+		if message.channel.name.startswith('konsultasi-') and message.content.lower() == 'tutup channel':
+			try:
+				if any(str(message.channel.id) == str(l[-1]) for l in list(db['konsultasi'].values())):
+					if not(message.author.bot):
+						await message.channel.send('Sebelum menutup channel ini, mohon isi link feedback berikut : https://bit.ly/FeedbackIITConsultation')
+						confirmation = await message.channel.send('Apakah Anda ingin menutup channel ini sekarang?')
+						await confirmation.add_reaction('✅')
+						await confirmation.add_reaction('❌')
+
+						def check(reaction, user):
+							return user == message.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
+
+						try:
+							reaction, _ = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+						except asyncio.TimeoutError:
+							await confirmation.clear_reactions()
+							return
+
+						if str(reaction.emoji) == '✅':
+							await confirmation.edit(content='Terima kasih telah melakukan konsultasi dengan CTO HMIF ITB!')
+							await confirmation.clear_reactions()
+
+							msg = await message.channel.send('Menghapus channel dalam 3...')
+							await asyncio.sleep(1)
+							for i in range(2, 0, -1):
+								await msg.edit(content=f'Menghapus channel dalam {i}...')
+								await asyncio.sleep(1)
+							await message.channel.delete()
+
+						elif str(reaction.emoji) == '❌':
+							await confirmation.edit(content='Dibatalkan!', delete_after=5)
+							await confirmation.clear_reactions()
+
 			except KeyError:
 				pass
 				
