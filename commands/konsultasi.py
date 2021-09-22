@@ -30,23 +30,23 @@ class Konsultasi(commands.Cog):
 			await channel.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 			return
 
-		return settings
+		return settings[1]
 
 	async def get_cat(self, guild_id, channel_id):
 		guild = await self.bot.fetch_guild(guild_id)
 		channel = guild.get_channel(channel_id)
 
 		try:
-			category = db['settings'][str(guild_id)][0]
+			category_id = int(db['settings'][str(guild_id)][0])
 		except KeyError:
 			await channel.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 			return
 
-		return category
+		return category_id
 
 	async def get_id_konsul(self):
 		try:
-			id_konsul = list(db['konsultasi'].keys())[-1]
+			id_konsul = int(list(db['konsultasi'].keys())[-1])
 		except KeyError:
 			return 1
 
@@ -56,8 +56,6 @@ class Konsultasi(commands.Cog):
 	@commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
 	async def setup(self, ctx, categoryID:int=None, messageID:int=None):
 		if messageID is not None and categoryID is not None:
-			# msg = await ctx.channel.fetch_message(messageID)
-			# cat = await self.bot.fetch_channel(categoryID)
 			try:
 				db['settings'][str(ctx.guild.id)]
 			except KeyError:
@@ -87,16 +85,16 @@ class Konsultasi(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_raw_reaction_add(self, payload):
-		if any([payload.message_id in await self.get_settings(payload.guild_id, payload.channel_id)]) and str(payload.emoji) == '🙋':
+		channel = await self.bot.fetch_channel(payload.channel_id)
+
+		if str(payload.message_id) == await self.get_settings(payload.guild_id, payload.channel_id) and str(payload.emoji) == '🙋':
 			user = await self.bot.fetch_user(payload.user_id)
 			guild = await self.bot.fetch_guild(payload.guild_id)
-			channel = await self.bot.fetch_channel(payload.channel_id)
 			message = await channel.fetch_message(payload.message_id)
 			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id, payload.channel_id))
 
 			overwrites = {
 				guild.default_role: discord.PermissionOverwrite(view_channel=False),
-				guild.me: discord.PermissionOverwrite(view_channel=True),
 				payload.member: discord.PermissionOverwrite(view_channel=True)
 			}
 
@@ -119,21 +117,24 @@ class Konsultasi(commands.Cog):
 			await message.remove_reaction('🙋', user)
 
 			try:
-				db['konsultasi'][str(current_id_konsul+1)] = [payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]
+				db['konsultasi'][str(current_id_konsul+1)] = [payload.member.id, payload.guild_id, ch.id]
 			except KeyError:
-				db['konsultasi'] = {1:[payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]}
+				db['konsultasi'] = {1:[payload.member.id, payload.guild_id, ch.id]}
 
-		try:
-			if any(channel.id == l[-1] for l in list(db['konsultasi'].values())):
-				def check_message(msg):
-					return (msg.author.bot and 
-						msg.embeds[0] and
-						msg.embeds[0].title == f'Halo {payload.member.name}!')
+		if channel.name.startswith('konsultasi-'):
+			try:
+				if any(str(payload.channel_id) == str(l[-1]) for l in list(db['konsultasi'].values())):
+					message = await channel.fetch_message(payload.message_id)
 
-				if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
-					await channel.delete()
-		except KeyError:
-			pass
+					def check_message(msg):
+						return (msg.author.bot and 
+							msg.embeds[0] and
+							msg.embeds[0].title == f'Halo {payload.member.name}!')
+
+					if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
+						await channel.delete()
+			except KeyError:
+				pass
 				
 def setup(bot):
 	bot.add_cog(Konsultasi(bot))
