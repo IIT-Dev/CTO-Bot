@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 class CTO(commands.Bot):
 	def __init__(self):
 		intents = discord.Intents().all()
-		super().__init__(command_prefix = '!', case_insensitive=True, intents=intents)
+		super().__init__(command_prefix = 'c!', case_insensitive=True, intents=intents)
 
 	@watch(path='commands')
 	async def on_ready(self):
