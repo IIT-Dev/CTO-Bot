@@ -122,7 +122,7 @@ class Konsultasi(commands.Cog):
 
 			current_id_konsul = self.get_id_konsul(payload.guild_id, payload.channel_id)
 
-			db['konsultasi'][current_id_konsul+1] = [payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]
+			db['konsultasi'][str(current_id_konsul+1)] = [payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]
 
 		if any(channel.id == l[-1] for l in list(db['konsultasi'].values())):
 			def check_message(msg):
