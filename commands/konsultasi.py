@@ -55,8 +55,8 @@ class Konsultasi(commands.Cog):
 
 		return id_konsul
 
-	@commands.command(brief='Setup bot settings for a first time on a server', description='Setup bot settings for a first time on a server')
-	@commands.is_owner()
+	@commands.command(name='setup', aliases=['set'], brief='Setup bot settings for a first time on a server', description='Setup bot settings for a first time on a server')
+	@commands.check_any(commands.is_owner(), administrator=True)
 	async def setup(self, ctx, categoryID:int=None, messageID:int=None):
 		if messageID is not None and categoryID is not None:
 			# msg = await ctx.channel.fetch_message(messageID)
@@ -72,8 +72,8 @@ class Konsultasi(commands.Cog):
 		else:
 			await ctx.send('Correct usage : `c!setup [category ID] [message ID]`', delete_after=8)
 
-	@commands.command(brief='Make a main message', description='Make a main message')
-	@commands.is_owner()
+	@commands.command(name='pubm', aliases=['pm'], brief='Make a main message', description='Make a main message')
+	@commands.check_any(commands.is_owner(), administrator=True)
 	async def public_message(self, ctx):
 		embed = discord.Embed(title='Konsultasi dengan CTO HMIF ITB!', color=discord.Colour.gold())
 		embed.set_footer(text='React dengan emoji 🙋 untuk membuka channel konsultasi!')

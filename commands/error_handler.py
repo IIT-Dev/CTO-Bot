@@ -14,8 +14,13 @@ class ErrorHandler(commands.Cog):
             await asyncio.sleep(5)
             await err_msg.delete()
         
-        elif isinstance(error, commands.RoleNotFound):
+        if isinstance(error, commands.RoleNotFound):
             err_msg = await ctx.send("Role Not Found!")
+            await asyncio.sleep(5)
+            await err_msg.delete()
+
+        if isinstance(error, commands.MissingPermissions):
+            err_msg = await ctx.send('You don\' have the permission to do this!')
             await asyncio.sleep(5)
             await err_msg.delete()
         

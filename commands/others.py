@@ -31,7 +31,7 @@ class OtherCommands(commands.Cog):
 	async def ping(self, ctx):
 		await ctx.send(f'Pong! 🏓\nPing : `{int(self.bot.latency*1000)}` ms')
 
-	@commands.command(name='settings', brief='Show settings of the current server', description='Show settings of the current server')
+	@commands.command(name='settings', aliases=['s'], brief='Show settings of the current server', description='Show settings of the current server')
 	async def check_settings(self, ctx, arg1:Optional[str], arg2:Optional[str]):
 		if arg1 == 'category' or arg1 == 'cat' or arg1 == 'c':
 			if ctx.author.guild_permissions.administrator == True or ctx.author.id == self.bot.owner_id:
@@ -92,7 +92,7 @@ Main Message	: {message.jump_url}
 
 			await ctx.send(msg)
 
-	@commands.command(brief='See all the settings in form of list of tuples (guild ID, category ID, message ID)', description='See all the settings in form of list of tuples (guild ID, category ID, message ID)')
+	@commands.command(name='vs', brief='See all the settings in form of list of tuples (guild ID, category ID, message ID)', description='See all the settings in form of list of tuples (guild ID, category ID, message ID)')
 	@commands.is_owner()
 	async def view_settings(self, ctx):
 		try:
@@ -103,7 +103,29 @@ Main Message	: {message.jump_url}
 
 		await ctx.send(settings)
 
-	@commands.command(brief='Delete the data of a table (not `DROP TABLE`)', description='Delete the data of a table (not `DROP TABLE`)')
+	@commands.command(name='vt', brief='Shows the contents of a table in the database', description='Shows the contents of a table in the database')
+	@commands.is_owner()
+	async def view_table(self, ctx, table_name:str=None):
+		try:
+			table = db[table_name]
+		except KeyError:
+			await ctx.send('Table `konsultasi` doesn\'t exist')
+			return
+
+		await ctx.send(table)
+	
+	@commands.command(name='vid', brief='Shows "id konsultasi" attribute in the `konsultasi` table', description='Shows "id konsultasi" attribute in the `konsultasi` table')
+	@commands.is_owner()
+	async def view_id_konsul(self, ctx):
+		try:
+			id_konsul = list(db['konsultasi'].keys())[-1]
+		except KeyError:
+			await ctx.send('Table `konsultasi` doesn\'t exist!')
+			return
+
+		await ctx.send(id_konsul)
+	
+	@commands.command(name='delt', brief='Delete the data of a table', description='Delete the data of a table')
 	@commands.is_owner()
 	async def del_table(self, ctx, table_name:str=None):
 		try:
@@ -135,28 +157,6 @@ Main Message	: {message.jump_url}
 			await confirmation.edit(content='Cancelled', delete_after=5)
 
 		await confirmation.clear_reactions()
-
-	@commands.command(brief='Shows the contents of a table in the database', description='Shows the contents of a table in the database')
-	@commands.is_owner()
-	async def view_table(self, ctx, table_name:str=None):
-		try:
-			table = db[table_name]
-		except KeyError:
-			await ctx.send('Table `konsultasi` doesn\'t exist')
-			return
-
-		await ctx.send(table)
-
-	@commands.command(brief='Shows "id konsultasi" attribute in the `konsultasi` table', description='Shows "id konsultasi" attribute in the `konsultasi` table')
-	@commands.is_owner()
-	async def view_id_konsul(self, ctx):
-		try:
-			id_konsul = list(db['konsultasi'].keys())[-1]
-		except KeyError:
-			await ctx.send('Table `konsultasi` doesn\'t exist!')
-			return
-
-		await ctx.send(id_konsul)
 
 def setup(bot):
 	bot.add_cog(OtherCommands(bot))
