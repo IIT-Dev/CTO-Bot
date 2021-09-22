@@ -8,7 +8,7 @@ class Konsultasi(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
-	async def get_cto_member(self, guild):
+	def get_cto_member(self, guild):
 		member1 = guild.get_member(394083155994214411)
 		member2 = guild.get_member(455713207458201602)
 		member3 = guild.get_member(833640260910317610)
@@ -102,7 +102,7 @@ class Konsultasi(commands.Cog):
 
 			embed=discord.Embed(title='New Konsultasi!', description=channel)
 			embed.set_footer(text=f'Created by {payload.member}')
-			for cto_member in await self.get_cto_member():
+			for cto_member in self.get_cto_member():
 				overwrites[cto_member] = discord.PermissionOverwrite(view_channel=True)
 				# await cto_member.send(embed=embed)
 			
