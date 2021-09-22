@@ -42,7 +42,7 @@ class OtherCommands(commands.Cog):
 					return
 
 				try:
-					db['settings'][ctx.guild.id][0] = arg2
+					db['settings'][str(ctx.guild.id)][0] = arg2
 				except KeyError:
 					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 					return
@@ -64,7 +64,7 @@ class OtherCommands(commands.Cog):
 					return
 
 				try:
-					db['settings'][ctx.guild.id][1] = arg2
+					db['settings'][str(ctx.guild.id)][1] = arg2
 				except KeyError:
 					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 					return
@@ -76,7 +76,7 @@ class OtherCommands(commands.Cog):
 
 		else:
 			try:
-				settings = db['settings'][ctx.guild.id]
+				settings = db['settings'][str(ctx.guild.id)]
 			except KeyError:
 				await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 				return

@@ -25,7 +25,7 @@ class Konsultasi(commands.Cog):
 		channel = guild.get_channel(channel_id)
 
 		try:
-			settings = db['settings'][guild_id]
+			settings = db['settings'][str(guild_id)]
 		except KeyError:
 			await channel.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 			return
@@ -37,7 +37,7 @@ class Konsultasi(commands.Cog):
 		channel = guild.get_channel(channel_id)
 
 		try:
-			category = db['settings'][guild_id][0]
+			category = db['settings'][str(guild_id)][0]
 		except KeyError:
 			await channel.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 			return
@@ -63,7 +63,7 @@ class Konsultasi(commands.Cog):
 			# msg = await ctx.channel.fetch_message(messageID)
 			# cat = await self.bot.fetch_channel(categoryID)
 			try:
-				db['settings'][ctx.guild.id]
+				db['settings'][str(ctx.guild.id)]
 			except KeyError:
 				try:
 					db['settings'][ctx.guild.id] = [categoryID, messageID]
