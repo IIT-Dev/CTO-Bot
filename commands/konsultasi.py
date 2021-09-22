@@ -1,97 +1,59 @@
 import discord
 from discord.ext import commands
 
-import sqlite3
+from replit import db
 
 class Konsultasi(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
-	async def get_cto_member(self):
-		member1 = await self.bot.fetch_user(394083155994214411)
-		member2 = await self.bot.fetch_user(455713207458201602)
-		member3 = await self.bot.fetch_user(833640260910317610)
-		member4 = await self.bot.fetch_user(360798464952500226)
-		member5 = await self.bot.fetch_user(632402909983932416)
-		member6 = await self.bot.fetch_user(631836244921548810)
+	async def get_cto_member(self, guild):
+		member1 = guild.get_member(394083155994214411)
+		member2 = guild.get_member(455713207458201602)
+		member3 = guild.get_member(833640260910317610)
+		member4 = guild.get_member(360798464952500226)
+		member5 = guild.get_member(632402909983932416)
+		member6 = guild.get_member(631836244921548810)
 
 		member_list = [member1, member2, member3, member4, member5, member6]
 
 		return member_list
 
-	async def get_settings(self, guild_id):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
+	async def get_settings(self, guild_id, channel_id):
+		guild = await self.bot.fetch_guild(guild_id)
+		channel = await guild.get_channel(channel_id)
 
 		try:
-			selection = f"""
-			SELECT *
-			FROM settings
-			WHERE guild_id = {guild_id}
-			"""
-			settings = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
-			# pass
-			# await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+			settings = db['settings'][guild_id]
+		except KeyError:
+			await channel.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 			return
-		finally:
-			conn.commit()
-			conn.close()
 
-		if settings:
-			return settings
+		return settings
 
-	async def get_cat(self, guildID):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
+	async def get_cat(self, guild_id, channel_id):
+		guild = await self.bot.fetch_guild(guild_id)
+		channel = await guild.get_channel(channel_id)
 
 		try:
-			selection = f"""
-			SELECT *
-			FROM settings
-			WHERE guild_id = {guildID}
-			"""
-			exist = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
-			# pass
-			# await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
+			category = db['settings'][guild_id][0]
+		except KeyError:
+			await channel.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 			return
-		finally:
-			conn.commit()
-			conn.close()
 
-		if exist:
-			return exist[0][1]
+		return category
 
-	async def get_id_konsul(self, nama_konsul):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
+	async def get_id_konsul(self, guild_id, channel_id):
+		guild = await self.bot.fetch_guild(guild_id)
+		channel = await guild.get_channel(channel_id)
 
 		try:
-			selection = """
-			SELECT id_konsul
-			FROM konsultasi
-			"""
-			id_konsul = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
-			# await ctx.send('Table `konsultasi` doesn\'t exist!')
-			conn.commit()
-			conn.close()
+			id_konsul = list(db['konsultasi'].keys())[-1]
+		except KeyError:
+			await channel.send('Table `konsultasi` doesn\'t exist!')
 			return
 
-		if id_konsul:
-			return id_konsul[-1][0]+1
-		else:
-			insertion = f"""
-			INSERT INTO konsultasi
-			VALUES (1, '{nama_konsul}')
-			"""
-			cursor.execute(insertion)
-
-			conn.commit()
-			conn.close()
-
-			return 1
+		return id_konsul
 
 	@commands.command(brief='Setup bot settings for a first time on a server', description='Setup bot settings for a first time on a server')
 	@commands.is_owner()
@@ -99,39 +61,16 @@ class Konsultasi(commands.Cog):
 		if messageID is not None and categoryID is not None:
 			# msg = await ctx.channel.fetch_message(messageID)
 			# cat = await self.bot.fetch_channel(categoryID)
-
-			conn = sqlite3.connect('Konsultasi.db')
-			cursor = conn.cursor()
-
 			try:
-				selection = f"""
-				SELECT *
-				FROM settings
-				WHERE guild_id = {ctx.guild.id}
-				"""
-				exist = cursor.execute(selection).fetchall()
-			except sqlite3.OperationalError:
-				await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
-				conn.commit()
-				conn.close()
+				db['settings'][ctx.guild.id]
+			except KeyError:
+				db['settings'][ctx.guild.id] = [categoryID, messageID]
+				await ctx.send('Setup successful!', delete_after=5)
 				return
 
-			if exist:
-				await ctx.send('The settings on this server has been set up', delete_after=5)
-
-			else:
-				insertion = f"""
-				INSERT INTO settings
-				VALUES ({ctx.guild.id}, {categoryID}, {messageID})
-				"""
-				cursor.execute(insertion)
-
-				await ctx.send('Setup successful!', delete_after=5)
-
-			conn.commit()
-			conn.close()
+			await ctx.send('The settings on this server has been set up', delete_after=5)
 		else:
-			await ctx.send('Correct usage : `!setup [category ID] [message ID]`', delete_after=8)
+			await ctx.send('Correct usage : `c!setup [category ID] [message ID]`', delete_after=8)
 
 	@commands.command(brief='Make a main message', description='Make a main message')
 	@commands.is_owner()
@@ -146,20 +85,26 @@ class Konsultasi(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_raw_reaction_add(self, payload):
-		user = await self.bot.fetch_user(payload.user_id)
-		guild = await self.bot.fetch_guild(payload.guild_id)
-		channel = await self.bot.fetch_channel(payload.channel_id)
-		message = await channel.fetch_message(payload.message_id)
-
-		if any([payload.message_id in tup for tup in await self.get_settings(payload.guild_id)]) and str(payload.emoji) == '🙋':
-			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id))
+		if any([payload.message_id in await self.get_settings(payload.guild_id, payload.channel_id)]) and str(payload.emoji) == '🙋':
+			user = await self.bot.fetch_user(payload.user_id)
+			guild = await self.bot.fetch_guild(payload.guild_id)
+			channel = await self.bot.fetch_channel(payload.channel_id)
+			message = await channel.fetch_message(payload.message_id)
+			category = await self.bot.fetch_channel(await self.get_cat(payload.guild_id, payload.channel_id))
 
 			overwrites = {
 				guild.default_role: discord.PermissionOverwrite(view_channel=False),
-				guild.me: discord.PermissionOverwrite(view_channel=True)
+				guild.me: discord.PermissionOverwrite(view_channel=True),
+				payload.member: discord.PermissionOverwrite(view_channel=True)
 			}
 
-			ch = await category.create_text_channel(f'konsultasi-{await self.get_id_konsul(payload.member.name)}')
+			embed=discord.Embed(title='New Konsultasi!', description=channel)
+			embed.set_footer(text=f'Created by {payload.member}')
+			for cto_member in await self.get_cto_member():
+				overwrites[cto_member] = discord.PermissionOverwrite(view_channel=True)
+				# await cto_member.send(embed=embed)
+
+			ch = await category.create_text_channel(f'konsultasi-{await self.get_id_konsul(payload.guild_id, payload.channel_id)}', overwrites=overwrites)
 
 			embed = discord.Embed(title=f'Halo {payload.member.name}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
 			embed.set_footer(text='React dengan emoji 🔒 untuk menutup channel ini')
@@ -169,26 +114,11 @@ class Konsultasi(commands.Cog):
 
 			await message.remove_reaction('🙋', user)
 
-			conn = sqlite3.connect('Konsultasi.db')
-			cursor = conn.cursor()
+			current_id_konsul = self.get_id_konsul(payload.guild_id, payload.channel_id)
 
-			if await self.get_id_konsul(payload.member.name) == 1:
-				insertion = f"""
-				INSERT INTO konsultasi
-				VALUES (1, '{payload.member.name}')
-				"""
-				cursor.execute(insertion)
-			else:
-				insertion = f"""
-				INSERT INTO konsultasi (nama_konsul)
-				VALUES ('{payload.member.name}')
-				"""
-				cursor.execute(insertion)
+			db['konsultasi'][current_id_konsul+1] = [payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]
 
-			conn.commit()
-			conn.close()
-
-		if channel.name.startswith('konsultasi-'):
+		if any(channel.id == l[-1] for l in list(db['konsultasi'].values())):
 			def check_message(msg):
 				return (msg.author.bot and 
 					msg.embeds[0] and

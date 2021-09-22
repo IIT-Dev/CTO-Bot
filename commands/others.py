@@ -3,15 +3,15 @@ from discord.ext import commands
 from discord.utils import get
 
 import asyncio
-import sqlite3
-from typing import Optional
+from replit import db
+from typing import Optional, Union
 
 class OtherCommands(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
 	# async def confirmation(self, ctx):
-	# 	confirmation = await ctx.send(f'Do you really want to delete data from table {tableName}?')
+	# 	confirmation = await ctx.send(f'Do you really want to delete data from table {table_name}?')
 	# 	await confirmation.add_reaction('✅')
 	# 	await confirmation.add_reaction('❌')
 
@@ -29,286 +29,134 @@ class OtherCommands(commands.Cog):
 
 	@commands.command(name='ping', aliases=['p'], brief='Show bot\'s ping', description='Show bot\'s ping')
 	async def ping(self, ctx):
-		await ctx.send(f'Pong! 🏓\nPing : {int(self.bot.latency*1000)} ms')
+		await ctx.send(f'Pong! 🏓\nPing : `{int(self.bot.latency*1000)}` ms')
 
 	@commands.command(name='settings', brief='Show settings of the current server', description='Show settings of the current server')
-	async def check_settings(self, ctx, arg1:Optional[str], arg2:Optional[str], arg3:Optional[int]):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
+	async def check_settings(self, ctx, arg1:Optional[str], arg2:Optional[str]):
+		if arg1 == 'category' or arg1 == 'cat' or arg1 == 'c':
+			if ctx.author.guild_permissions.administrator == True or ctx.author.id == self.bot.owner_id:
+				category = ctx.guild.get_channel(arg2)
 
-		if arg1 == 'change' or arg1 == 'chg':
-			if arg2 == 'category' or arg2 == 'cat' or arg2 == 'c':
-				try:
-					category = await self.bot.fetch_channel(arg3)
-				except:
-					await ctx.send('Category Not Found!', delete_after=5)
+				if category is None:
+					await ctx.send(f'Category with ID `{arg2}` is not found!', delete_after=5)
 					return
 
 				try:
-					update = f"""
-					UPDATE settings
-					SET category_id = {arg3}
-					WHERE guild_id = {ctx.guild.id}
-					"""
-					cursor.execute(update)
-				except sqlite3.OperationalError:
-					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
-					return
-				# finally:
-				# 	conn.commit()
-				# 	conn.close()
-
-				await ctx.send(f'Main category has been changed to `{category.name.upper()}`!', delete_after=5)
-
-			elif arg2 == 'message' or arg2 == 'msg' or arg2 == 'm':
-				try:
-					await ctx.channel.fetch_message(arg3)
-				except discord.NotFound:
-					await ctx.send('Message Not Found!', delete_after=5)
+					db['settings'][ctx.guild.id][0] = arg2
+				except KeyError:
+					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
 					return
 
-				try:
-					update = f"""
-					UPDATE settings
-					SET message_id = {arg3}
-					WHERE guild_id = {ctx.guild.id}
-					"""
-					cursor.execute(update)
-				except sqlite3.OperationalError:
-					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `!setup [category ID] [message ID]`')
-					return
-				# finally:
-				# 	conn.commit()
-				# 	conn.close()
-
-				await ctx.send(f'Main message has been changed to https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{arg3}', delete_after=5)
+				await ctx.send(f'Main category has been changed to `{category.name.upper()}`', delete_after=5)
 
 			else:
-				await ctx.send('Correct usage : `!settings (change/chg) [(category/cat/c)|(message/msg/m)] [category ID|message ID]`', delete_after=8)
+				await ctx.send('You don\'t have a permission to do this!')
+
+		elif arg1 == 'message' or arg1 == 'msg' or arg1 == 'm':
+			if ctx.author.guild_permissions.administrator == True or ctx.author.id == self.bot.owner_id:
+				try:
+					msg = await ctx.channel.fetch_message(arg2)
+				except discord.NotFound:
+					await ctx.send('Message is not found!', delete_after=5)
+					return
+				except discord.HTTPException:
+					await ctx.send('Failed to fetch message!', delete_after=5)
+					return
+
+				try:
+					db['settings'][ctx.guild.id][1] = arg2
+				except KeyError:
+					await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
+					return
+
+				await ctx.send(f'Main message has been changed to {msg.jump_url}', delete_after=5)
+
+			else:
+				await ctx.send('You don\'t have a permission to do this!')
 
 		else:
-			selection = f"""
-			SELECT *
-			FROM settings
-			WHERE guild_id = {ctx.guild.id}
-			"""
-			settings = cursor.execute(selection).fetchone()
+			try:
+				settings = db['settings'][ctx.guild.id]
+			except KeyError:
+				await ctx.send('Settings haven\'t been set up on this server!\nSetup for the first time with `c!setup [category ID] [message ID]`')
+				return
 
-			category = get(ctx.guild.categories, id=settings[1])
+			category = await self.bot.fetch_channel(settings[0])
+			message = await ctx.guild.fetch_message(settings[1])
 
 			msg = f"""
 Server					: `{ctx.guild.name}`
 Main Category	: `{category.name.upper()}`
-Main Message	: https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{settings[2]}
+Main Message	: {message.jump_url}
 """
 
 			await ctx.send(msg)
 
-		conn.commit()
-		conn.close()
-
-	@commands.command(brief='Make a database with `konsultasi` and `settings` tables', description='Make a database with `konsultasi` and `settings` tables')
-	@commands.is_owner()
-	async def make_db(self, ctx):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
-
-		try:
-			view1 = """
-			SELECT *
-			FROM konsultasi
-			"""
-			cursor.execute(view1).fetchall()
-
-			view2 = """
-			SELECT *
-			FROM settings
-			"""
-			cursor.execute(view2).fetchall()
-
-			confirmation = await ctx.send(f'Do you really want to drop `konsultasi` and `settings` tables and create the new ones?')
-			await confirmation.add_reaction('✅')
-			await confirmation.add_reaction('❌')
-
-			def check(reaction, user):
-				return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
-
-			try:
-				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
-			except asyncio.TimeoutError:
-				await confirmation.edit(content='Timed Out!', delete_after=5)
-				await confirmation.clear_reactions()
-				return
-
-			if str(reaction.emoji) == '✅':
-				drop1 = "DROP TABLE konsultasi"
-				cursor.execute(drop1)
-
-				drop2 = "DROP TABLE settings"
-				cursor.execute(drop2)
-
-				await confirmation.edit(content='Table `konsultasi` and `settings` have been remade!', delete_after=5)
-				await confirmation.clear_reactions()
-
-			elif str(reaction.emoji) == '❌':
-				await confirmation.edit(content='Cancelled', delete_after=5)
-				await confirmation.clear_reactions()
-				return
-
-		except sqlite3.OperationalError:
-			pass
-
-		finally:
-			setup1 = """
-			CREATE TABLE IF NOT EXISTS konsultasi (
-				id_konsul INTEGER PRIMARY KEY AUTOINCREMENT,
-				nama_konsul str NOT NULL
-			);
-			"""
-			cursor.execute(setup1)
-
-			setup2 = """
-			CREATE TABLE IF NOT EXISTS settings (
-				guild_id int NOT NULL,
-				category_id int NOT NULL,
-				message_id int NOT NULL
-			);
-			"""
-			cursor.execute(setup2)
-
-			conn.commit()
-			conn.close()
-
-			await ctx.send('Database has been set!', delete_after=5)
-
 	@commands.command(brief='See all the settings in form of list of tuples (guild ID, category ID, message ID)', description='See all the settings in form of list of tuples (guild ID, category ID, message ID)')
 	@commands.is_owner()
 	async def view_settings(self, ctx):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
-
 		try:
-			selection = """
-			SELECT *
-			FROM settings
-			"""
-			settings = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
+			settings = db['settings']
+		except KeyError:
 			await ctx.send('Table `settings` doesn\'t exist!')
 			return
-		finally:
-			conn.commit()
-			conn.close()
 
 		await ctx.send(settings)
 
 	@commands.command(brief='Delete the data of a table (not `DROP TABLE`)', description='Delete the data of a table (not `DROP TABLE`)')
 	@commands.is_owner()
-	async def del_table(self, ctx, tableName:str=None):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
-
+	async def del_table(self, ctx, table_name:str=None):
 		try:
-			selection = f"""
-			SELECT *
-			FROM {tableName}
-			"""
-			exist = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
-			await ctx.send(f'Table `{tableName}` doesn\'t exist!')
-			conn.commit()
-			conn.close()
+			db[table_name]
+		except KeyError:
+			await ctx.send(f'Table `{table_name}` doesn\'t exist!')
 			return
 
-		if exist:
-			confirmation = await ctx.send(f'Do you really want to delete data from table `{tableName}`?')
-			await confirmation.add_reaction('✅')
-			await confirmation.add_reaction('❌')
+		confirmation = await ctx.send(f'Do you really want to delete data from table `{table_name}`?')
+		await confirmation.add_reaction('✅')
+		await confirmation.add_reaction('❌')
 
-			def check(reaction, user):
-				return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
-
-			try:
-				reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
-			except asyncio.TimeoutError:
-				await confirmation.edit(content='Timed Out!', delete_after=5)
-				await confirmation.clear_reactions()
-				return
-
-			if str(reaction.emoji) == '✅':
-				deletion = f"""
-				DELETE FROM {tableName}
-				"""
-				cursor.execute(deletion)
-
-				if tableName == 'konsultasi':
-					alter = """
-					UPDATE sqlite_sequence SET seq = 0 WHERE name = 'konsultasi'
-					"""
-					cursor.execute(alter)
-
-				await confirmation.edit(content=f'Data from table `{tableName}` has been deleted!', delete_after=5)
-
-			elif str(reaction.emoji) == '❌':
-				await confirmation.edit(content='Cancelled', delete_after=5)
-
-			await confirmation.clear_reactions()
-
-		else:
-			await ctx.send(f'There isn\'t any data on table {tableName}!', delete_after=5)
-
-		conn.commit()
-		conn.close()
-
-	@commands.command(brief='Shows the contents of `konsultasi` table in the database', description='Shows the contents of `konsultasi` table in the database')
-	@commands.is_owner()
-	async def view_konsul(self, ctx):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
+		def check(reaction, user):
+			return user == ctx.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
 
 		try:
-			selection = """
-			SELECT *
-			FROM konsultasi
-			"""
-			result = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
+			reaction, _ = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+		except asyncio.TimeoutError:
+			await confirmation.edit(content='Timed Out!', delete_after=5)
+			await confirmation.clear_reactions()
+			return
+
+		if str(reaction.emoji) == '✅':
+			del db[table_name]
+
+			await confirmation.edit(content=f'Data from table `{table_name}` has been deleted!', delete_after=5)
+
+		elif str(reaction.emoji) == '❌':
+			await confirmation.edit(content='Cancelled', delete_after=5)
+
+		await confirmation.clear_reactions()
+
+	@commands.command(brief='Shows the contents of a table in the database', description='Shows the contents of a table in the database')
+	@commands.is_owner()
+	async def view_table(self, ctx, table_name:str=None):
+		try:
+			table = db[table_name]
+		except KeyError:
 			await ctx.send('Table `konsultasi` doesn\'t exist')
 			return
-		finally:
-			conn.commit()
-			conn.close()
 
-		await ctx.send(result)
+		await ctx.send(table)
 
 	@commands.command(brief='Shows "id konsultasi" attribute in the `konsultasi` table', description='Shows "id konsultasi" attribute in the `konsultasi` table')
 	@commands.is_owner()
 	async def view_id_konsul(self, ctx):
-		conn = sqlite3.connect('Konsultasi.db')
-		cursor = conn.cursor()
-
 		try:
-			selection = """
-			SELECT id_konsul
-			FROM konsultasi
-			"""
-			result = cursor.execute(selection).fetchall()
-		except sqlite3.OperationalError:
+			id_konsul = list(db['konsultasi'].keys())[-1]
+		except KeyError:
 			await ctx.send('Table `konsultasi` doesn\'t exist!')
 			return
-		finally:
-			conn.commit()
-			conn.close()
 
-		await ctx.send(result)
-
-	@commands.command(brief='Reload extension', description='Reload extension')
-	@commands.is_owner()
-	async def reload_ex(self, ctx):
-		await ctx.send('Which extension do you want to reload?')
-		await ctx.send(f'Available extensions:\n{self.bot.extensions}')
-		msg = await self.bot.wait_for('message', check=lambda m:m.author.id == 394083155994214411)
-		self.bot.reload_extension(msg)
+		await ctx.send(id_konsul)
 
 def setup(bot):
 	bot.add_cog(OtherCommands(bot))
