@@ -44,15 +44,11 @@ class Konsultasi(commands.Cog):
 
 		return category
 
-	async def get_id_konsul(self, guild_id, channel_id):
-		guild = await self.bot.fetch_guild(guild_id)
-		channel = await guild.get_channel(channel_id)
-
+	async def get_id_konsul(self):
 		try:
 			id_konsul = list(db['konsultasi'].keys())[-1]
 		except KeyError:
-			await channel.send('Table `konsultasi` doesn\'t exist!')
-			return
+			return 1
 
 		return id_konsul
 
@@ -109,8 +105,10 @@ class Konsultasi(commands.Cog):
 			for cto_member in await self.get_cto_member():
 				overwrites[cto_member] = discord.PermissionOverwrite(view_channel=True)
 				# await cto_member.send(embed=embed)
+			
+			current_id_konsul = await self.get_id_konsul()
 
-			ch = await category.create_text_channel(f'konsultasi-{await self.get_id_konsul(payload.guild_id, payload.channel_id)}', overwrites=overwrites)
+			ch = await category.create_text_channel(f'konsultasi-{current_id_konsul}', overwrites=overwrites)
 
 			embed = discord.Embed(title=f'Halo {payload.member.name}!', description='Selamat datang di channel konsultasi CTO HMIF ITB!', color=discord.Colour.gold())
 			embed.set_footer(text='React dengan emoji 🔒 untuk menutup channel ini')
@@ -120,18 +118,22 @@ class Konsultasi(commands.Cog):
 
 			await message.remove_reaction('🙋', user)
 
-			current_id_konsul = self.get_id_konsul(payload.guild_id, payload.channel_id)
+			try:
+				db['konsultasi'][str(current_id_konsul+1)] = [payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]
+			except KeyError:
+				db['konsultasi'] = {1:[payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]}
 
-			db['konsultasi'][str(current_id_konsul+1)] = [payload.member.id, payload.member, payload.member.nick, payload.guild_id, payload.channel_id]
+		try:
+			if any(channel.id == l[-1] for l in list(db['konsultasi'].values())):
+				def check_message(msg):
+					return (msg.author.bot and 
+						msg.embeds[0] and
+						msg.embeds[0].title == f'Halo {payload.member.name}!')
 
-		if any(channel.id == l[-1] for l in list(db['konsultasi'].values())):
-			def check_message(msg):
-				return (msg.author.bot and 
-					msg.embeds[0] and
-					msg.embeds[0].title == f'Halo {payload.member.name}!')
-
-			if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
-				await channel.delete()
+				if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
+					await channel.delete()
+		except KeyError:
+			pass
 				
 def setup(bot):
 	bot.add_cog(Konsultasi(bot))
