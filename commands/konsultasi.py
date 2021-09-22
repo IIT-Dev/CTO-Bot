@@ -65,11 +65,16 @@ class Konsultasi(commands.Cog):
 			try:
 				db['settings'][ctx.guild.id]
 			except KeyError:
-				db['settings'][ctx.guild.id] = [categoryID, messageID]
-				await ctx.send('Setup successful!', delete_after=5)
-				return
+				try:
+					db['settings'][ctx.guild.id] = [categoryID, messageID]
+					await ctx.send('Setup successful!', delete_after=5)
+					return
+				except KeyError:
+					db['settings'] = {ctx.guild.id:[categoryID,messageID]}
+					await ctx.send('Setup successful!', delete_after=5)
+					return
 
-			await ctx.send('The settings on this server has been set up', delete_after=5)
+			await ctx.send('The settings on this server have been set up before', delete_after=5)
 		else:
 			await ctx.send('Correct usage : `c!setup [category ID] [message ID]`', delete_after=8)
 
