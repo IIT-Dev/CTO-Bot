@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands.core import has_permissions
 
 from replit import db
 
@@ -8,13 +7,13 @@ class Konsultasi(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
-	def get_cto_member(self, guild):
-		member1 = guild.get_member(394083155994214411)
-		member2 = guild.get_member(455713207458201602)
-		member3 = guild.get_member(833640260910317610)
-		member4 = guild.get_member(360798464952500226)
-		member5 = guild.get_member(632402909983932416)
-		member6 = guild.get_member(631836244921548810)
+	async def get_cto_member(self, guild):
+		member1 = await guild.fetch_member(394083155994214411)
+		member2 = await guild.fetch_member(455713207458201602)
+		member3 = await guild.fetch_member(833640260910317610)
+		member4 = await guild.fetch_member(360798464952500226)
+		member5 = await guild.fetch_member(632402909983932416)
+		member6 = await guild.fetch_member(631836244921548810)
 
 		member_list = [member1, member2, member3, member4, member5, member6]
 
@@ -100,7 +99,7 @@ class Konsultasi(commands.Cog):
 
 			embed=discord.Embed(title='New Konsultasi!', description=channel)
 			embed.set_footer(text=f'Created by {payload.member}')
-			for cto_member in self.get_cto_member(guild):
+			for cto_member in await self.get_cto_member(guild):
 				overwrites[cto_member] = discord.PermissionOverwrite(view_channel=True)
 				# await cto_member.send(embed=embed)
 			

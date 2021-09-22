@@ -1,10 +1,9 @@
 import discord
 from discord.ext import commands
-from discord.utils import get
 
 import asyncio
 from replit import db
-from typing import Optional, Union
+from typing import Optional
 
 class OtherCommands(commands.Cog):
 	def __init__(self, bot):
