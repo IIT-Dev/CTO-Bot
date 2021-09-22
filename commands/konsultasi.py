@@ -102,7 +102,7 @@ class Konsultasi(commands.Cog):
 
 			embed=discord.Embed(title='New Konsultasi!', description=channel)
 			embed.set_footer(text=f'Created by {payload.member}')
-			for cto_member in self.get_cto_member():
+			for cto_member in self.get_cto_member(guild):
 				overwrites[cto_member] = discord.PermissionOverwrite(view_channel=True)
 				# await cto_member.send(embed=embed)
 			
