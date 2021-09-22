@@ -22,7 +22,7 @@ class Konsultasi(commands.Cog):
 
 	async def get_settings(self, guild_id, channel_id):
 		guild = await self.bot.fetch_guild(guild_id)
-		channel = await guild.get_channel(channel_id)
+		channel = guild.get_channel(channel_id)
 
 		try:
 			settings = db['settings'][guild_id]
@@ -34,7 +34,7 @@ class Konsultasi(commands.Cog):
 
 	async def get_cat(self, guild_id, channel_id):
 		guild = await self.bot.fetch_guild(guild_id)
-		channel = await guild.get_channel(channel_id)
+		channel = guild.get_channel(channel_id)
 
 		try:
 			category = db['settings'][guild_id][0]
