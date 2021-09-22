@@ -116,7 +116,7 @@ Anda dapat melakukan konsultasi selama text channel ini ada. Jika Anda sudah sel
 Terimakasih"""
 			embed = discord.Embed(title=f'Halo {payload.member.nick}!', description=desc_message, color=discord.Colour.gold())
 
-			msg = await ch.send(content=message.author.mention, embed=embed)
+			msg = await ch.send(content=payload.member.mention, embed=embed)
 			await msg.add_reaction('🔒')
 
 			await message.remove_reaction('🙋', user)
@@ -137,13 +137,13 @@ Terimakasih"""
 							msg.embeds[0].title == f'Halo {payload.member.nick}!')
 
 					if str(payload.emoji) == '🔒' and not(payload.member.bot) and check_message(message):
-						await message.channel.send(f'{message.author.mention}\nSebelum menutup channel ini, mohon isi link feedback berikut : https://bit.ly/FeedbackIITConsultation')
+						await message.channel.send(f'{payload.member.mention}\nSebelum menutup channel ini, mohon isi link feedback berikut : https://bit.ly/FeedbackIITConsultation')
 						confirmation = await message.channel.send('Apakah Anda ingin menutup channel ini sekarang?')
 						await confirmation.add_reaction('✅')
 						await confirmation.add_reaction('❌')
 
 						def check(reaction, user):
-							return user == message.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
+							return user == payload.member and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
 
 						try:
 							reaction, _ = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
