@@ -82,7 +82,7 @@ class OtherCommands(commands.Cog):
 				return
 
 			category = await self.bot.fetch_channel(settings[0])
-			message = await ctx.guild.fetch_message(settings[1])
+			message = await ctx.channel.fetch_message(settings[1])
 
 			msg = f"""
 Server					: `{ctx.guild.name}`
